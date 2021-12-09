@@ -1,4 +1,7 @@
 use crate::*;
+use crate::decimal::Decimal;
+
+use gcd::Gcd;
 
 pub fn from_centre_x(centre_x: Rational) -> Circle {
     let radius = Rational::new(1, 2*centre_x.denom().pow(2));
@@ -9,13 +12,30 @@ pub fn from_centre_x(centre_x: Rational) -> Circle {
 }
 
 pub fn is_valid(circle: &Circle) -> bool {
-    return circle.centre.y == circle.radius;
+    circle.centre.y == circle.radius
 }
 
 pub fn in_range(
-    _centre_x_range: RationalRange,
-    _radius_range: RationalRange,
+    centre_x_range: RationalRange,
+    radius_range: RationalRange,
 ) -> Circles {
-    todo!();
-    Circles::new()
+    let mut ret = Circles::new();
+
+    let q_max = 2.0 * radius_range.start.to_f64();
+    let q_max = 1.0 / q_max.sqrt();
+    let q_max = q_max.floor() as u64;
+
+    let q_min = 2.0 * radius_range.end.to_f64();
+    let q_min = 1.0 / q_min.sqrt();
+    let q_min = (q_min + 1.0).floor() as u64;
+
+    for q in q_min..(q_max + 1) {
+        for p in *centre_x_range.start.numer()..*centre_x_range.end.numer() {
+            if p.gcd(q) == 1 {
+                ret.push(from_centre_x(Rational::new(p, q)));
+            }
+        }
+    }
+
+    ret
 }
