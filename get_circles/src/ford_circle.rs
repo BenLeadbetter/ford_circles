@@ -4,7 +4,7 @@ use crate::decimal::Decimal;
 use gcd::Gcd;
 
 pub fn from_centre_x(centre_x: Rational) -> Circle {
-    let radius = Rational::new(1, 2*centre_x.denom().pow(2));
+    let radius = Rational::new_raw(1, 2*centre_x.denom().pow(2));
     Circle {
         centre: RationalPoint { x: centre_x, y: radius },
         radius,
@@ -40,7 +40,7 @@ pub fn in_range(
 
         for p in p_min..p_max {
             if p.gcd(q) == 1 {
-                ret.push(from_centre_x(Rational::new(p, q)));
+                ret.push(from_centre_x(Rational::new_raw(p, q)));
             }
         }
     }
