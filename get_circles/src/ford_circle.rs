@@ -30,7 +30,15 @@ pub fn in_range(
     let q_min = (q_min + 1.0).floor() as u64;
 
     for q in q_min..(q_max + 1) {
-        for p in *centre_x_range.start.numer()..*centre_x_range.end.numer() {
+
+        let p_limit = |bound: Rational| {
+            *bound.numer() * q / *bound.denom()
+        };
+
+        let p_min = p_limit(centre_x_range.start);
+        let p_max = p_limit(centre_x_range.end);
+
+        for p in p_min..p_max {
             if p.gcd(q) == 1 {
                 ret.push(from_centre_x(Rational::new(p, q)));
             }

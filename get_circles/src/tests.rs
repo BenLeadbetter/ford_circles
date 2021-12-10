@@ -64,10 +64,6 @@ fn circles_between_zero_and_one_radius_greater_than_quarter() {
         ford_circle::from_centre_x(Rational::new(0, 1)),
         ford_circle::from_centre_x(Rational::new(1, 1)),
         ford_circle::from_centre_x(Rational::new(1, 2)),
-        ford_circle::from_centre_x(Rational::new(1, 3)),
-        ford_circle::from_centre_x(Rational::new(2, 3)),
-        ford_circle::from_centre_x(Rational::new(1, 4)),
-        ford_circle::from_centre_x(Rational::new(3, 4)),
     ];
 
     for circle in circles {
@@ -91,33 +87,40 @@ fn circles_between_one_and_two_radius_between_a_tenth_and_a_quarter() {
     );
 
     let expected_circles = std::vec![
+        ford_circle::from_centre_x(Rational::new(3, 2)),
+    ];
+
+    for circle in circles {
+        if !expected_circles.contains(&circle) {
+            panic!();
+        }
+    }
+}
+
+#[test]
+fn circles_between_one_and_two_radius_between_a_fiftieth_and_a_quarter() {
+    let circles = ford_circle::in_range(
+        RationalRange{
+            start: Rational::new(1, 1),
+            end: Rational::new(2, 1),
+        },
+        RationalRange{
+            start: Rational::new(1, 50),
+            end: Rational::new(1, 4),
+        },
+    );
+
+    let expected_circles = std::vec![
+        ford_circle::from_centre_x(Rational::new(3, 2)),
+        ford_circle::from_centre_x(Rational::new(4, 3)),
+        ford_circle::from_centre_x(Rational::new(5, 3)),
         ford_circle::from_centre_x(Rational::new(5, 4)),
         ford_circle::from_centre_x(Rational::new(7, 4)),
         ford_circle::from_centre_x(Rational::new(6, 5)),
         ford_circle::from_centre_x(Rational::new(7, 5)),
         ford_circle::from_centre_x(Rational::new(8, 5)),
         ford_circle::from_centre_x(Rational::new(9, 5)),
-        ford_circle::from_centre_x(Rational::new(7, 6)),
-        ford_circle::from_centre_x(Rational::new(11, 6)),
-        ford_circle::from_centre_x(Rational::new(8, 7)),
-        ford_circle::from_centre_x(Rational::new(9, 7)),
-        ford_circle::from_centre_x(Rational::new(10, 7)),
-        ford_circle::from_centre_x(Rational::new(11, 7)),
-        ford_circle::from_centre_x(Rational::new(12, 7)),
-        ford_circle::from_centre_x(Rational::new(13, 7)),
-        ford_circle::from_centre_x(Rational::new(9, 8)),
-        ford_circle::from_centre_x(Rational::new(11, 8)),
-        ford_circle::from_centre_x(Rational::new(13, 8)),
-        ford_circle::from_centre_x(Rational::new(15, 8)),
-        ford_circle::from_centre_x(Rational::new(10, 9)),
-        ford_circle::from_centre_x(Rational::new(11, 9)),
-        ford_circle::from_centre_x(Rational::new(13, 9)),
-        ford_circle::from_centre_x(Rational::new(14, 9)),
-        ford_circle::from_centre_x(Rational::new(16, 9)),
-        ford_circle::from_centre_x(Rational::new(17, 9)),
     ];
-
-    println!("{:?}", circles);
 
     for circle in circles {
         if !expected_circles.contains(&circle) {
