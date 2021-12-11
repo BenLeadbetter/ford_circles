@@ -1,8 +1,8 @@
 use crate::decimal::Decimal;
 
-pub type Rational = num_rational::Ratio<u64>;
+pub type Rational = num_rational::Ratio<i64>;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct RationalPoint {
     pub x: Rational,
     pub y: Rational,
