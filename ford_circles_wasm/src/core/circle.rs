@@ -1,5 +1,5 @@
-use crate::rational::Rational;
-use crate::rational::RationalPoint;
+use crate::core::Rational;
+use crate::core::RationalPoint;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Circle {

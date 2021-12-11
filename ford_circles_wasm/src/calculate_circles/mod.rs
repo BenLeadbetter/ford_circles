@@ -1,6 +1,8 @@
-use crate::*;
-use crate::decimal::Decimal;
+use crate::core::*;
 use gcd::Gcd;
+
+#[cfg(test)]
+mod tests;
 
 pub fn from_centre_x(centre_x: Rational) -> Circle {
     let radius = Rational::new_raw(1, 2*centre_x.denom().pow(2));
@@ -27,38 +29,18 @@ pub fn in_view(
         let q = q as i64;
         let p_centre = *view.centre.x.numer() * q / *view.centre.x.denom();
 
-        let mut add_circles = |stride: i64| {
-            let mut p = p_centre;
+        for (mut p, d) in [(p_centre, 1), (p_centre - 1, -1)] {
             loop {
-                p = p + stride;
-
-                if (p as u64).gcd(q as u64) != 1 {
-                    if stride == 0 {
+                if (p as u64).gcd(q as u64) == 1 {    
+                    let circle = from_centre_x(Rational::new_raw(p, q));
+                    if !circle.intersects(&view) {
                         break;
-                    } else {
-                        continue;
                     }
+                    ret.push(circle);
                 }
-
-                let circle = from_centre_x(Rational::new_raw(p, q));
-                if !circle.intersects(&view) {
-                    break;
-                }
-
-                ret.push(circle);
-
-                if stride == 0 {
-                    break;
-                }
+                p = p + d;
             }
-        };
-
-        // middle
-        add_circles(0);
-        // towards positive infinity
-        add_circles(1);
-        // towards negative infinity
-        add_circles(-1);
+        }
     }
 
     ret

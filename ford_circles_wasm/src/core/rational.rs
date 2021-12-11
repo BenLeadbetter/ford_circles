@@ -1,4 +1,4 @@
-use crate::decimal::Decimal;
+use crate::core::Decimal;
 
 pub type Rational = num_rational::Ratio<i64>;
 

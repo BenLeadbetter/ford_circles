@@ -1,1 +1,2 @@
-get_circles/target/**
+.vscode
+ford_circles_wasm/target
