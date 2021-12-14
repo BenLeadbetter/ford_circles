@@ -1,3 +1,4 @@
-mod renderer;
+mod circle_renderer;
+mod interface;
 
-pub use renderer::Renderer;
+pub use interface::*;

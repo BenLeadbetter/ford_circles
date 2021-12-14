@@ -1,5 +1,5 @@
 use crate::core::*;
-use gcd::Gcd;
+use gcd::Gcd as _;
 
 #[cfg(test)]
 mod tests;
@@ -20,9 +20,7 @@ pub fn in_view(
     view: &Circle,
     resolution: Rational,
 ) -> Circles {
-    let radius_range = calculate_radius_range(view, resolution);
-    let q_range = calculate_q_range(radius_range);
-
+    let q_range = calculate_q_range(view, resolution);
     let mut ret = Circles::new();
 
     for q in q_range.0..(q_range.1 + 1) {
@@ -56,7 +54,12 @@ fn calculate_radius_range(
     }
 }
 
-fn calculate_q_range(radius_range: RationalRange) -> (u64, u64) {
+fn calculate_q_range(
+    view: &Circle,
+    resolution: Rational,
+) -> (u64, u64) {
+    let radius_range = calculate_radius_range(view, resolution);
+
     let q_max = 2.0 * radius_range.start.to_f64();
     let q_max = 1.0 / q_max.sqrt();
     let q_max = q_max.floor() as u64;

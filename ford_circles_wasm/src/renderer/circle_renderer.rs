@@ -1,28 +1,42 @@
-use crate::renderer::{InputAction, LoopFeedback, Renderer};
-use luminance::{Semantics, Vertex};
-use luminance_front::{
+use luminance::{
     context::GraphicsContext,
     framebuffer::Framebuffer,
     pipeline::PipelineState,
-    render_state:RenderState,
+    render_state::RenderState,
     shader,
     tess,
     texture,
-    Backend,
+    Semantics, 
+    Vertex
 };
+use luminance_webgl::webgl2::WebGL2;
 
-const VERTEX_SHADER: &'static str = include_str!("circle_shader.vert.glsl");
-const VERTEX_SHADER: &'static str = include_str!("circle_shader.frag.glsl");
+#[derive(Clone, Debug)]
+pub enum InputAction {
+    Quit,
+    Resized { width: u32, height: u32 },
+    Wheel { delta: f32 },
+    CursorMoved { x: f32, y: f32 },
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum LoopFeedback<T> {
+    Continue(T),
+    Exit,
+}
+
+const VERTEX_SHADER: &'static str = include_str!("shaders/circle_shader.vert.glsl");
+const FRAGMENT_SHADER: &'static str = include_str!("shaders/circle_shader.frag.glsl");
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Semantics)]
-pub enum Semantics {
-    #[sem(name = "pos", repr = "[f32, 2]", wrapper = "VertexPosition")]
+pub enum VertexSemantics {
+    #[sem(name = "position", repr = "[f32; 2]", wrapper = "VertexPosition")]
     Position,
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, Debug, PartialEq, VertexPosition)]
-#[vertex(sem = "Semantics")]
+#[derive(Clone, Copy, Debug, PartialEq, Vertex)]
+#[vertex(sem = "VertexSemantics")]
 struct Vertex {
     pos: VertexPosition,
 }
@@ -31,19 +45,20 @@ const VERTICES: [Vertex; 3] = [
     Vertex::new(VertexPosition::new([0.5, -0.5])),
     Vertex::new(VertexPosition::new([0.0, 0.5])),
     Vertex::new(VertexPosition::new([-0.5, -0.5])),
-]
+];
 
-const INDICES: [u8; 2] = [0, 1, 2];
+const INDICES: [u8; 3] = [0, 1, 2];
 
 pub struct CircleRenderer {
-    program: shader::Program<Semantics, (), ()>,
-    shape: Tess<Vertex>,
+    program: shader::Program<WebGL2, VertexSemantics, (), ()>,
+    shape: tess::Tess<WebGL2, Vertex, u8>,
 }
 
-imple Renderer for CircleRenderer {
-    fn bootstrap(context: &mut impl GraphicsBackend<Backend = Backend) -> Self {
+
+impl CircleRenderer {
+    pub fn bootstrap(context: &mut impl GraphicsContext<Backend = WebGL2>) -> Self {
         let program = context
-            .new_shader_program::<Semantics, (), ()>()
+            .new_shader_program::<VertexSemantics, (), ()>()
             .from_strings(VERTEX_SHADER, None, None, FRAGMENT_SHADER)
             .expect("program creation")
             .ignore_warnings();
@@ -62,14 +77,14 @@ imple Renderer for CircleRenderer {
         }
     }
 
-    fn render_frame(
+    pub fn render_frame(
         mut self,
-        back_buffer: Framebuffer<texture::Dim2, (), ()>,
+        back_buffer: Framebuffer<WebGL2, texture::Dim2, (), ()>,
         actions: impl Iterator<Item = InputAction>,
-        context: &mut impl GraphicsContext<Backend = Backend>,
+        context: &mut impl GraphicsContext<Backend = WebGL2>,
     ) -> LoopFeedback<Self> { 
         for action in actions {
-            println!("Action: {}", action)
+            println!("Action: {:?}", action)
         }
 
         let program = &mut self.program;
@@ -83,18 +98,18 @@ imple Renderer for CircleRenderer {
                 |_, mut shade_gate| {
                     shade_gate.shade(program, |_, _, mut render_gate| {
                         render_gate.render(&RenderState::default(), |mut tess_gate| {
-                            tess_gate.render(shape);
+                            tess_gate.render(shape)
                         })
                     })
                 },
             )
             .assume();
-    }
-
-    if render.is_ok() {
-        LoopFeedback::Continue(self)
-    } else {
-        LoopFeedback::Exit
+        
+        if render.is_ok() {
+            LoopFeedback::Continue(self)
+        } else {
+            LoopFeedback::Exit
+        }
     }
 }
 

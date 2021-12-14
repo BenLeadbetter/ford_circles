@@ -21,19 +21,9 @@ impl Circle {
 impl std::cmp::PartialOrd for Circle {
     fn partial_cmp(&self, other: &Circle) -> Option<std::cmp::Ordering> {
         if self.sq_distance_between_centres(other) == Rational::new_raw(0, 1) {
-            if self.radius < other.radius {
-                return Some(std::cmp::Ordering::Less);
-            }  else if self.radius > other.radius {
-                return Some(std::cmp::Ordering::Greater);
-            } else {
-                return Some(std::cmp::Ordering::Equal);
-            }
-        } else if self.centre.x < other.centre.x {
-            return Some(std::cmp::Ordering::Less);
-        } else if self.centre.x < other.centre.x {
-            return Some(std::cmp::Ordering::Greater);
+            self.radius.partial_cmp(&other.radius)
         } else {
-            return Some(std::cmp::Ordering::Equal);
+            self.centre.x.partial_cmp(&other.centre.x)
         }
     }
 }
