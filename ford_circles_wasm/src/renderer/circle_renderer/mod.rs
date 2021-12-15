@@ -6,10 +6,10 @@ use luminance::{
     shader,
     tess,
     texture,
-    Semantics, 
-    Vertex
 };
 use luminance_webgl::webgl2::WebGL2;
+
+mod circle_tess;
 
 #[derive(Clone, Debug)]
 pub enum InputAction {
@@ -28,48 +28,29 @@ pub enum LoopFeedback<T> {
 const VERTEX_SHADER: &'static str = include_str!("shaders/circle_shader.vert.glsl");
 const FRAGMENT_SHADER: &'static str = include_str!("shaders/circle_shader.frag.glsl");
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Semantics)]
-pub enum VertexSemantics {
-    #[sem(name = "position", repr = "[f32; 2]", wrapper = "VertexPosition")]
-    Position,
-}
-
-#[repr(C)]
-#[derive(Clone, Copy, Debug, PartialEq, Vertex)]
-#[vertex(sem = "VertexSemantics")]
-struct Vertex {
-    pos: VertexPosition,
-}
-
-const VERTICES: [Vertex; 3] = [
-    Vertex::new(VertexPosition::new([0.5, -0.5])),
-    Vertex::new(VertexPosition::new([0.0, 0.5])),
-    Vertex::new(VertexPosition::new([-0.5, -0.5])),
-];
-
-const INDICES: [u8; 3] = [0, 1, 2];
-
 pub struct CircleRenderer {
-    program: shader::Program<WebGL2, VertexSemantics, (), ()>,
-    shape: tess::Tess<WebGL2, Vertex, u8>,
+    program: shader::Program<WebGL2, circle_tess::VertexSemantics, (), ()>,
+    shape: tess::Tess<WebGL2, circle_tess::Vertex, u8>,
 }
 
 
 impl CircleRenderer {
     pub fn bootstrap(context: &mut impl GraphicsContext<Backend = WebGL2>) -> Self {
         let program = context
-            .new_shader_program::<VertexSemantics, (), ()>()
+            .new_shader_program::<circle_tess::VertexSemantics, (), ()>()
             .from_strings(VERTEX_SHADER, None, None, FRAGMENT_SHADER)
             .expect("program creation")
             .ignore_warnings();
 
+        let circle_data = circle_tess::CircleTessData::new(20);
         let shape = context
             .new_tess()
-            .set_vertices(&VERTICES[..])
-            .set_indices(&INDICES[..])
+            .set_vertices(&*circle_data.vertices)
+            .set_indices(&*circle_data.indices)
             .set_mode(tess::Mode::Triangle)
             .build()
             .unwrap();
+        drop(circle_data);
 
         Self {
             program,
