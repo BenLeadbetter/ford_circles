@@ -10,7 +10,7 @@ use wasm_bindgen::prelude::*;
 pub struct Interface {
     surface: WebSysWebGL2Surface,
     actions: std::vec::Vec<InputAction>,
-    renderer: CircleRenderer,
+    renderer: Option<CircleRenderer>,
 }
 
 #[wasm_bindgen]
@@ -20,7 +20,7 @@ impl Interface {
         Interface {
             surface,
             actions: std::vec::Vec::new(),
-            renderer,
+            renderer: Some(renderer),
         }
     }
 
@@ -40,21 +40,24 @@ impl Interface {
         self.actions.push(InputAction::CursorMoved{ x, y });
     }
 
-    pub fn render(mut self) -> bool {
-        let feedback = self.renderer.render_frame(
-            self.surface.back_buffer().expect("WebGL backbuffer"),
-            self.actions.iter().cloned(),
-            &mut self.surface,
-        );
-
-        self.actions.clear();
-
-        match feedback {
-            LoopFeedback::Continue(stepped) => {
-                self.renderer = stepped;
-                true
-            }
-            LoopFeedback::Exit => false
+    pub fn render(&mut self) -> bool {
+        match self.renderer.take() {
+            Some(val) => { 
+                let feedback = val.render_frame(
+                    self.surface.back_buffer().expect("WebGL backbuffer"),
+                    self.actions.iter().cloned(),
+                    &mut self.surface,
+                );
+                self.actions.clear();
+                match feedback {
+                    LoopFeedback::Continue(stepped) => {
+                        self.renderer = Some(stepped);
+                        true
+                    }
+                    LoopFeedback::Exit => false
+                }
+            },
+            None => false
         }
     }
 }

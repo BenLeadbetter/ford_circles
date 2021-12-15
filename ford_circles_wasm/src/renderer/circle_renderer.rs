@@ -84,7 +84,7 @@ impl CircleRenderer {
         context: &mut impl GraphicsContext<Backend = WebGL2>,
     ) -> LoopFeedback<Self> { 
         for action in actions {
-            println!("Action: {:?}", action)
+            log::info!("Action: {:?}", action)
         }
 
         let program = &mut self.program;
