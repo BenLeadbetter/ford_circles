@@ -133,6 +133,40 @@ fn view_radius_one_twenty_fourth_centre_six_fifths_resolution_a_hundredth() {
 }
 
 #[test]
+fn view_radius_one_centre_zero_resolution_one_twentieth() {
+    let mut circles = in_view(
+        &Circle {
+            centre: RationalPoint { 
+                x: Rational::new(0, 1),
+                y: Rational::new(0, 1),
+            },
+            radius: Rational::new(1, 1),
+        },
+        Rational::new(1, 20)
+    );
+    circles.sort();
+
+    let mut expected_circles = std::vec![
+        from_centre_x(Rational::new(-1, 1)),
+        from_centre_x(Rational::new(0, 1)),    
+        from_centre_x(Rational::new(1, 1)),
+        from_centre_x(Rational::new(-1, 2)),
+        from_centre_x(Rational::new(1, 2)),
+        from_centre_x(Rational::new(-2, 3)),
+        from_centre_x(Rational::new(-1, 3)),
+        from_centre_x(Rational::new(1, 3)),
+        from_centre_x(Rational::new(2, 3)),
+    ];
+    expected_circles.sort();
+
+    for circle in &circles {
+        println!("{:?}", circle);
+    }
+
+    assert_eq!(circles, expected_circles);
+}
+
+#[test]
 fn large_circles_not_included_for_correct_resolution() {
     let mut circles = in_view(
         &Circle {

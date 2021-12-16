@@ -17,4 +17,8 @@ impl Decimal for Rational {
     fn to_f64(&self) -> f64 {
         (*self.numer() as f64) / (*self.denom() as f64)
     }
+
+    fn to_f32(&self) -> f32 {
+        (*self.numer() as f32) / (*self.denom() as f32)
+    }
 }

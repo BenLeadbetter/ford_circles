@@ -1,5 +1,7 @@
 out vec4 frag;
 
+uniform vec3 color;
+
 void main() {
-    frag = vec4(1.0, 0.0, 1.0, 1.0);
+    frag = vec4(color, 1.0);
 }

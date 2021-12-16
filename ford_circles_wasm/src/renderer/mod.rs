@@ -1,3 +1,5 @@
+pub mod model;
+
 mod circle_renderer;
 mod interface;
 

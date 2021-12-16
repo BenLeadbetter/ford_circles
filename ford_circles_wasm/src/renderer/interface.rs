@@ -1,7 +1,11 @@
-use crate::renderer::circle_renderer::{
-    CircleRenderer, 
-    InputAction,
-    LoopFeedback,
+use crate::{
+    renderer::circle_renderer::{
+        CircleRenderer, 
+        InputAction,
+        LoopFeedback,
+    },
+    core::*,
+    calculate_circles,
 };
 use luminance_web_sys::WebSysWebGL2Surface;
 use wasm_bindgen::prelude::*;
@@ -17,9 +21,20 @@ pub struct Interface {
 impl Interface {
     fn new(mut surface: WebSysWebGL2Surface) -> Self {
         let renderer = CircleRenderer::bootstrap(&mut surface);
+
+        let map_js_value = |v: Result<JsValue, JsValue>| {
+            v
+                .ok()
+                .and_then(|jsv| jsv.as_f64())
+                .map(|f| f as u32)
+                .unwrap()
+        };
+        let width = map_js_value(surface.window.inner_width());
+        let height = map_js_value(surface.window.inner_height());
+       
         Interface {
             surface,
-            actions: std::vec::Vec::new(),
+            actions: vec![InputAction::Resized{ width, height }],
             renderer: Some(renderer),
         }
     }
@@ -47,6 +62,16 @@ impl Interface {
                     self.surface.back_buffer().expect("WebGL backbuffer"),
                     self.actions.iter().cloned(),
                     &mut self.surface,
+                    &calculate_circles::in_view(
+                        &Circle {
+                            centre: RationalPoint {
+                                x: Rational::new(0, 1),
+                                y: Rational::new(0, 1),
+                            },
+                            radius: Rational::new(1, 1),
+                        },
+                        Rational::new(1, 20),
+                    ),
                 );
                 self.actions.clear();
                 match feedback {
