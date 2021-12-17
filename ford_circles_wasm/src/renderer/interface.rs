@@ -4,8 +4,6 @@ use crate::{
         InputAction,
         LoopFeedback,
     },
-    core::*,
-    calculate_circles,
 };
 use luminance_web_sys::WebSysWebGL2Surface;
 use wasm_bindgen::prelude::*;
@@ -62,16 +60,6 @@ impl Interface {
                     self.surface.back_buffer().expect("WebGL backbuffer"),
                     self.actions.iter().cloned(),
                     &mut self.surface,
-                    &calculate_circles::in_view(
-                        &Circle {
-                            centre: RationalPoint {
-                                x: Rational::new(0, 1),
-                                y: Rational::new(0, 1),
-                            },
-                            radius: Rational::new(1, 1),
-                        },
-                        Rational::new(1, 200),
-                    ),
                 );
                 self.actions.clear();
                 match feedback {

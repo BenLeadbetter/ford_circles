@@ -19,7 +19,11 @@ use luminance::{
     UniformInterface,
 };
 use luminance_webgl::webgl2::WebGL2;
-use crate::renderer::model::Model as _;
+use crate::{
+    core::*,
+    calculate_circles,
+    renderer::model::Model as _,
+};
 
 #[derive(Clone, Debug)]
 pub enum InputAction {
@@ -55,6 +59,7 @@ pub struct CircleRenderer {
     fov: f32,
     scale: f32,
     view_matrix: cgmath::Matrix4<f32>,
+    circles: crate::core::Circles,
 }
 
 impl CircleRenderer {
@@ -88,6 +93,16 @@ impl CircleRenderer {
             fov,
             scale,
             view_matrix,
+            circles: calculate_circles::in_view(
+                &Circle {
+                    centre: RationalPoint {
+                        x: Rational::new(0, 1),
+                        y: Rational::new(0, 1),
+                    },
+                    radius: Rational::new(1, 1),
+                },
+                Rational::new(1, 200),
+            ),
         }
     }
 
@@ -96,7 +111,6 @@ impl CircleRenderer {
         back_buffer: Framebuffer<WebGL2, texture::Dim2, (), ()>,
         actions: impl Iterator<Item = InputAction>,
         context: &mut impl GraphicsContext<Backend = WebGL2>,
-        circles: &crate::core::Circles,
     ) -> LoopFeedback<Self> { 
         for action in actions {
             match action {
@@ -130,7 +144,7 @@ impl CircleRenderer {
                             &uniform_interface.view, 
                             to_mat44(&self.view_matrix));
 
-                        for circle in circles {
+                        for circle in &self.circles {
                             program_interface.set(
                                 &uniform_interface.model, 
                                 to_mat44(&circle.model_matrix()));
@@ -159,6 +173,7 @@ impl CircleRenderer {
     fn set_eye(&mut self, eye: cgmath::Point3<f32>) {
         self.eye = eye;
         self.view_matrix = Self::calculate_view(self.eye, self.fov, self.scale);
+        self.calculate_circles();
     }
 
     fn set_fov(&mut self, fov: f32) {
@@ -169,15 +184,32 @@ impl CircleRenderer {
     fn set_scale(&mut self, scale: f32) {
         self.scale = scale;
         self.view_matrix = Self::calculate_view(self.eye, self.fov, self.scale);
+        self.calculate_circles();
     }
 
     fn calculate_view(eye: cgmath::Point3<f32>, fov: f32, scale: f32) -> cgmath::Matrix4<f32> {
-        let ret = cgmath::Matrix4::look_to_rh(
+        cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, -0.4, 0.0))
+        * cgmath::Matrix4::look_to_rh(
             eye,
             cgmath::Vector3::<f32>::new(0.0, 0.0, -1.0),
             cgmath::Vector3::<f32>::new(0.0, 1.0, 0.0),
+        )
+        * cgmath::Matrix4::<f32>::from_nonuniform_scale(scale, fov * scale, 1.0)
+    }
+
+    fn calculate_circles(&mut self) {
+        let radius = Rational::approximate_float(5.0 / self.scale).unwrap();
+        self.circles = calculate_circles::in_view(
+            &Circle {
+                centre: RationalPoint { 
+                    x: Rational::approximate_float(self.eye.x).unwrap(),
+                    y: Rational::approximate_float(self.eye.y).unwrap(),
+                },
+                radius,
+            },
+            radius * Rational::new(1, 1000),
         );
-        cgmath::Matrix4::<f32>::from_nonuniform_scale(scale, fov * scale, 1.0) * ret
+        log::info!("number of circles: {}", self.circles.len());
     }
 }
 
@@ -189,4 +221,3 @@ fn to_mat44(matrix: &cgmath::Matrix4<f32>) -> Mat44<f32> {
         [matrix.w.x, matrix.w.y, matrix.w.z, matrix.w.w],
     ])
 }
-
