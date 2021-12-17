@@ -53,6 +53,7 @@ pub struct CircleRenderer {
     shape: tess::Tess<WebGL2, circle_tess::Vertex, u8>,
     eye: cgmath::Point3<f32>,
     fov: f32,
+    scale: f32,
     view_matrix: cgmath::Matrix4<f32>,
 }
 
@@ -74,15 +75,19 @@ impl CircleRenderer {
             .unwrap();
         drop(circle_data);
 
-        let eye = cgmath::Point3::new(0.0, 0.0, 1.0);
+        let eye = cgmath::Point3::new(0.2, 0.0, 1.0);
         let fov = 1.0;
+        let scale = 1.0;
+        let view_matrix = Self::calculate_view(eye, fov, scale);
+        log::info!("view matrix: {:?}", view_matrix);
 
         Self {
             program,
             shape,
             eye,
             fov,
-            view_matrix: Self::calculate_view(eye, fov)
+            scale,
+            view_matrix,
         }
     }
 
@@ -99,6 +104,14 @@ impl CircleRenderer {
                     width, 
                     height 
                 } => self.set_fov(width as f32 / height as f32),
+                InputAction::Wheel { 
+                    delta 
+                } => {
+                    let mapped = 1.0 
+                        - 2.0 / std::f32::consts::PI
+                        * (delta / 100.0).atan();
+                    self.set_scale(self.scale * mapped);
+                }
                 _ => {},
             }
         }
@@ -145,21 +158,26 @@ impl CircleRenderer {
 
     fn set_eye(&mut self, eye: cgmath::Point3<f32>) {
         self.eye = eye;
-        self.view_matrix = Self::calculate_view(self.eye, self.fov);
+        self.view_matrix = Self::calculate_view(self.eye, self.fov, self.scale);
     }
 
     fn set_fov(&mut self, fov: f32) {
         self.fov = fov;
-        self.view_matrix = Self::calculate_view(self.eye, self.fov);
+        self.view_matrix = Self::calculate_view(self.eye, self.fov, self.scale);
     }
 
-    fn calculate_view(eye: cgmath::Point3<f32>, fov: f32) -> cgmath::Matrix4<f32> {
-        let ret = cgmath::Matrix4::look_at_rh(
+    fn set_scale(&mut self, scale: f32) {
+        self.scale = scale;
+        self.view_matrix = Self::calculate_view(self.eye, self.fov, self.scale);
+    }
+
+    fn calculate_view(eye: cgmath::Point3<f32>, fov: f32, scale: f32) -> cgmath::Matrix4<f32> {
+        let ret = cgmath::Matrix4::look_to_rh(
             eye,
-            cgmath::Point3::<f32>::new(0.0, 0.0, 0.0),
+            cgmath::Vector3::<f32>::new(0.0, 0.0, -1.0),
             cgmath::Vector3::<f32>::new(0.0, 1.0, 0.0),
         );
-        cgmath::Matrix4::<f32>::from_nonuniform_scale(fov, 1.0, 1.0) * ret
+        cgmath::Matrix4::<f32>::from_nonuniform_scale(scale, fov * scale, 1.0) * ret
     }
 }
 
