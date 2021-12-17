@@ -70,7 +70,7 @@ impl Interface {
                             },
                             radius: Rational::new(1, 1),
                         },
-                        Rational::new(1, 20),
+                        Rational::new(1, 200),
                     ),
                 );
                 self.actions.clear();

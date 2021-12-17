@@ -29,7 +29,7 @@ pub fn in_view(
 
         for (mut p, d) in [(p_centre, 1), (p_centre - 1, -1)] {
             loop {
-                if (p as u64).gcd(q as u64) == 1 {    
+                if (p.abs() as u64).gcd(q.abs() as u64) == 1 {    
                     let circle = from_centre_x(Rational::new_raw(p, q));
                     if !circle.intersects(&view) {
                         break;
