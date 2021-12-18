@@ -84,7 +84,6 @@ impl CircleRenderer {
         let fov = 1.0;
         let scale = 1.0;
         let view_matrix = Self::calculate_view(eye, fov, scale);
-        log::info!("view matrix: {:?}", view_matrix);
 
         Self {
             program,
@@ -148,10 +147,12 @@ impl CircleRenderer {
                             program_interface.set(
                                 &uniform_interface.model, 
                                 to_mat44(&circle.model_matrix()));
+
                             program_interface.set(
                                 &uniform_interface.color,
-                                Vec3::new(0.0, 1.0, 1.0)
+                                circle.to_color()
                             );
+
                             render_gate.render(&RenderState::default(), |mut tess_gate| {
                                 tess_gate.render(shape)
                             })?;
@@ -209,7 +210,6 @@ impl CircleRenderer {
             },
             radius * Rational::new(1, 1000),
         );
-        log::info!("number of circles: {}", self.circles.len());
     }
 }
 
