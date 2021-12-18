@@ -171,10 +171,11 @@ impl CircleRenderer {
         }
     }
 
-    fn set_eye(&mut self, eye: cgmath::Point3<f32>) {
+    fn _set_eye(&mut self, eye: cgmath::Point3<f32>) {
         self.eye = eye;
         self.view_matrix = Self::calculate_view(self.eye, self.fov, self.scale);
         self.calculate_circles();
+        todo!();
     }
 
     fn set_fov(&mut self, fov: f32) {
