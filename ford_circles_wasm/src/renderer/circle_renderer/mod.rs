@@ -70,7 +70,7 @@ impl CircleRenderer {
             .expect("program creation")
             .ignore_warnings();
 
-        let circle_data = circle_tess::CircleTessData::new(40);
+        let circle_data = circle_tess::CircleTessData::new(20);
         let shape = context
             .new_tess()
             .set_vertices(&*circle_data.vertices)

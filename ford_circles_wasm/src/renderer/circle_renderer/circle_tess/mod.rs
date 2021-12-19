@@ -35,13 +35,19 @@ impl CircleTessData {
 
 pub fn calculate_vertices(segments: u8) -> Vec<Vertex> {
     let mut ret = Vec::new();
+
+    // circle vertices overlap the true unit circle
+    // the overlap will be masked-out in the fragment shader
+    // the more segments the less the overlap
+    let r = 1.0 / (std::f32::consts::PI / segments as f32).cos();
+
     ret.push(Vertex::new(VertexPosition::new([0.0, 0.0])));
 
     let angle_delta = 2.0 * std::f32::consts::PI / segments as f32;
     for i in 0..segments {
         ret.push(Vertex::new(VertexPosition::new([
-            (angle_delta * i as f32).cos(), 
-            (angle_delta * i as f32).sin()
+            r * (angle_delta * i as f32).cos(), 
+            r * (angle_delta * i as f32).sin()
         ])));
     }
 
