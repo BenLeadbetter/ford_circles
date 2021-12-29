@@ -2,6 +2,11 @@ mod circle_model;
 mod circle_tess;
 
 use luminance::{
+    blending::{
+        Blending,
+        Equation,
+        Factor,
+    },
     context::GraphicsContext,
     framebuffer::Framebuffer,
     pipeline::PipelineState,
@@ -10,6 +15,7 @@ use luminance::{
         types::{
             Mat44,
             Vec3,
+            Vec2,
         },
         Program,
         Uniform,
@@ -50,13 +56,15 @@ struct ShaderInterface {
     model: Uniform<Mat44<f32>>,
     #[uniform(unbound)]
     color: Uniform<Vec3<f32>>,
+    #[uniform(unbound)]
+    resolution: Uniform<Vec2<f32>>,
 }
 
 pub struct CircleRenderer {
     program: Program<WebGL2, circle_tess::VertexSemantics, (), ShaderInterface>,
     shape: tess::Tess<WebGL2, circle_tess::Vertex, u8>,
     eye: cgmath::Point3<f32>,
-    fov: f32,
+    resolution: [u32; 2],
     scale: f32,
     view_matrix: cgmath::Matrix4<f32>,
     circles: crate::core::Circles,
@@ -70,7 +78,7 @@ impl CircleRenderer {
             .expect("program creation")
             .ignore_warnings();
 
-        let circle_data = circle_tess::CircleTessData::new(20);
+        let circle_data = circle_tess::CircleTessData::new(10);
         let shape = context
             .new_tess()
             .set_vertices(&*circle_data.vertices)
@@ -81,15 +89,14 @@ impl CircleRenderer {
         drop(circle_data);
 
         let eye = cgmath::Point3::new(0.2, 0.0, 1.0);
-        let fov = 1.0;
         let scale = 1.0;
-        let view_matrix = Self::calculate_view(eye, fov, scale);
+        let view_matrix = Self::calculate_view(eye, scale);
 
         Self {
             program,
             shape,
             eye,
-            fov,
+            resolution: [640, 480],
             scale,
             view_matrix,
             circles: calculate_circles::in_view(
@@ -116,7 +123,7 @@ impl CircleRenderer {
                 InputAction::Resized { 
                     width, 
                     height 
-                } => self.set_fov(width as f32 / height as f32),
+                } => self.set_resolution([width, height]),
                 InputAction::Wheel { 
                     delta 
                 } => {
@@ -136,12 +143,27 @@ impl CircleRenderer {
             .new_pipeline_gate()
             .pipeline(
                 &back_buffer,
-                &PipelineState::default(),
+                &PipelineState::default().
+                    set_clear_color([0.02, 0.0, 0.04, 1.0]),
                 |_, mut shade_gate| {
                     shade_gate.shade(&mut program, |mut program_interface, uniform_interface, mut render_gate| {
                         program_interface.set(
                             &uniform_interface.view, 
                             to_mat44(&self.view_matrix));
+                        program_interface.set(
+                            &uniform_interface.resolution,
+                            Vec2::new(
+                                self.resolution[0] as f32, 
+                                self.resolution[1] as f32,
+                        ));
+
+                        let render_state = &RenderState::default()
+                            .set_blending(Blending{
+                                equation: Equation::Additive,
+                                src: Factor::SrcAlpha,
+                                dst: Factor::SrcAlphaComplement,
+                            }).
+                            set_depth_test(None);
 
                         for circle in &self.circles {
                             program_interface.set(
@@ -153,7 +175,7 @@ impl CircleRenderer {
                                 circle.to_color()
                             );
 
-                            render_gate.render(&RenderState::default(), |mut tess_gate| {
+                            render_gate.render(&render_state, |mut tess_gate| {
                                 tess_gate.render(shape)
                             })?;
                         }
@@ -173,30 +195,29 @@ impl CircleRenderer {
 
     fn _set_eye(&mut self, eye: cgmath::Point3<f32>) {
         self.eye = eye;
-        self.view_matrix = Self::calculate_view(self.eye, self.fov, self.scale);
+        self.view_matrix = Self::calculate_view(self.eye, self.scale);
         self.calculate_circles();
         todo!();
     }
 
-    fn set_fov(&mut self, fov: f32) {
-        self.fov = fov;
-        self.view_matrix = Self::calculate_view(self.eye, self.fov, self.scale);
+    fn set_resolution(&mut self, resolution: [u32; 2]) {
+        self.resolution = resolution;
     }
 
     fn set_scale(&mut self, scale: f32) {
         self.scale = scale;
-        self.view_matrix = Self::calculate_view(self.eye, self.fov, self.scale);
+        self.view_matrix = Self::calculate_view(self.eye, self.scale);
         self.calculate_circles();
     }
 
-    fn calculate_view(eye: cgmath::Point3<f32>, fov: f32, scale: f32) -> cgmath::Matrix4<f32> {
+    fn calculate_view(eye: cgmath::Point3<f32>, scale: f32) -> cgmath::Matrix4<f32> {
         cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, -0.4, 0.0))
         * cgmath::Matrix4::look_to_rh(
             eye,
             cgmath::Vector3::<f32>::new(0.0, 0.0, -1.0),
             cgmath::Vector3::<f32>::new(0.0, 1.0, 0.0),
         )
-        * cgmath::Matrix4::<f32>::from_nonuniform_scale(scale, fov * scale, 1.0)
+        * cgmath::Matrix4::from_scale(scale)
     }
 
     fn calculate_circles(&mut self) {
@@ -209,7 +230,7 @@ impl CircleRenderer {
                 },
                 radius,
             },
-            radius * Rational::new(1, 1000),
+            radius * Rational::new(1, 200),
         );
     }
 }
