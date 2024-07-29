@@ -24,6 +24,7 @@ pub fn render(
     if !state.dirty {
         return Ok(());
     }
+    web_sys::console::debug_1(&"start render".into());
 
     set_transform_to_context(&state.transform, context)?;
 
@@ -31,7 +32,7 @@ pub fn render(
 
     state.dirty = false;
 
-    web_sys::console::debug_1(&"Finished render".into());
+    web_sys::console::debug_1(&"finished render".into());
 
     Ok(())
 }
