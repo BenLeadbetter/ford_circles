@@ -26,10 +26,33 @@ pub fn init() -> State {
 }
 
 #[wasm_bindgen]
-pub fn update_transform(state: &mut State, event: &web_sys::WheelEvent) {
+pub fn update_transform_on_wheel(state: &mut State, event: &web_sys::WheelEvent) {
     web_sys::console::debug_1(&format!("update transform {:?}", event).into());
-    state.transform.append_translation_mut(&Vector::new(event.delta_x(), 0.0));
+
+    scroll(state, event.delta_x());
+    zoom(
+        state,
+        event.offset_x() as f64,
+        1.0 + event.delta_y().atan() * 0.05,
+    );
+
     state.dirty = true;
+}
+
+/// zoom about (x_centre, canvas centre y)
+fn zoom(state: &mut State, x_centre: f64, zoom: f64) {
+    let zoom_centre = Vector::new(x_centre, state.canvas_size.height / 2.0);
+    let transform = &mut state.transform;
+
+    transform.append_translation_mut(&(-1.0 * zoom_centre));
+    transform.append_scaling_mut(zoom);
+    transform.append_translation_mut(&zoom_centre);
+}
+
+/// scroll horizontally
+fn scroll(state: &mut State, delta: f64) {
+    let transform = &mut state.transform;
+    transform.append_translation_mut(&Vector::new(delta, 0.0));
 }
 
 #[wasm_bindgen]

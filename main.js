@@ -35,7 +35,7 @@ function initState() {
 function setupEventHandlers() {
     state.canvas.addEventListener('wheel', (event) => {
         event.preventDefault();
-        rs.update_transform(state.rsState, event);
+        rs.update_transform_on_wheel(state.rsState, event);
     });
 }
 
