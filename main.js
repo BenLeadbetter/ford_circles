@@ -6,6 +6,7 @@ async function start() {
     await initWasm();
     initState();
     setupEventHandlers();
+
     console.info('ford circles initialized');
 
     render();
@@ -27,11 +28,14 @@ function initState() {
     if (!state.context) {
         throw new Error('2D context not found');
     }
+    rs.update_canvas_size(state.rsState, state.canvas);
+
 }
 
 function setupEventHandlers() {
     state.canvas.addEventListener('wheel', (event) => {
-        console.info('todo: update rust transform', event);
+        event.preventDefault();
+        rs.update_transform(state.rsState, event);
     });
 }
 
