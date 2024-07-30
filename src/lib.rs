@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-type Transform = nalgebra::base::Matrix3<f64>;
+type Matrix = nalgebra::base::Matrix3<f64>;
 type Vector = nalgebra::base::Vector2<f64>;
 
 #[derive(Debug, Default)]
@@ -12,7 +12,7 @@ struct CanvasSize {
 #[wasm_bindgen]
 pub struct State {
     dirty: bool,
-    transform: Transform,
+    transform: Matrix,
     canvas_size: CanvasSize,
 }
 
@@ -20,7 +20,7 @@ pub struct State {
 pub fn init() -> State {
     State {
         dirty: true,
-        transform: Transform::identity(),
+        transform: Matrix::identity(),
         canvas_size: Default::default(),
     }
 }
@@ -62,7 +62,7 @@ pub fn update_canvas_size(state: &mut State, canvas: &web_sys::HtmlCanvasElement
     state.canvas_size.width = canvas.width().into();
     state.canvas_size.height = canvas.height().into();
 
-    state.transform = Transform::identity();
+    state.transform = Matrix::identity();
     state.transform.append_nonuniform_scaling_mut(&Vector::new(
         state.canvas_size.height / 2.0,
         -state.canvas_size.height / 2.0,
@@ -86,11 +86,8 @@ pub fn render(
     web_sys::console::debug_1(&"start render".into());
 
     clear(state, context)?;
-
     set_transform_to_context(&state.transform, context)?;
-
-    draw_circle(context, 0.0, 1.0)?;
-
+    draw(state, context)?;
     state.dirty = false;
 
     web_sys::console::debug_1(&"finished render".into());
@@ -98,8 +95,32 @@ pub fn render(
     Ok(())
 }
 
+pub fn draw(state: &State, context: &web_sys::CanvasRenderingContext2d) -> Result<(), JsValue> {
+    let (x_min, x_max) = visible_range(state);
+    web_sys::console::debug_1(&format!("draw {x_min} to {x_max}").into());
+    let mut x = x_min.ceil() - 1.0;
+    while x < x_max + 1.0 {
+        draw_circle(context, x, 1.0)?;
+        x += 1.0;
+    }
+    Ok(())
+}
+
+fn visible_range(state: &State) -> (f64, f64) {
+    let inverse = state.transform.try_inverse().unwrap();
+    let data =  inverse * nalgebra::base::Matrix3x2::<f64>::new(
+            0.0,
+            state.canvas_size.width,
+            0.0,
+            state.canvas_size.height,
+            1.0,
+            1.0,
+        );
+    (data[0] - 0.5, data[3] + 0.5)
+}
+
 fn draw_circle(context: &web_sys::CanvasRenderingContext2d, p: f64, q: f64) -> Result<(), JsValue> {
-    web_sys::console::debug_1(&format!("draw circle: ({p}, {q})").into());
+    // web_sys::console::debug_1(&format!("draw circle: ({p}, {q})").into());
     let x = p / q;
     let r = 1.0 / (2.0 * q * q);
     context.begin_path();
@@ -112,7 +133,7 @@ fn draw_circle(context: &web_sys::CanvasRenderingContext2d, p: f64, q: f64) -> R
 }
 
 fn set_transform_to_context(
-    transform: &Transform,
+    transform: &Matrix,
     context: &web_sys::CanvasRenderingContext2d,
 ) -> Result<(), JsValue> {
     web_sys::console::debug_1(&format!("set transform: {:?}", transform).into());
