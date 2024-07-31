@@ -138,6 +138,7 @@ pub fn draw(state: &mut State, context: &web_sys::CanvasRenderingContext2d) -> R
 
 fn are_coprime(p: i64, q: i64, cache: &mut CoprimeCheckCache) -> bool {
     use num_integer::Integer;
+    let p = p % q;
     **cache.get(&(p, q)).get_or_insert(&(p.gcd(&q) == 1))
 }
 
