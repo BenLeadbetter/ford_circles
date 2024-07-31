@@ -36,9 +36,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "flat_map"
+version = "0.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4fa2a56a33c493fc81acbad4676c599cf2b128f21462a020043ea1eee46244f"
+
+[[package]]
 name = "ford_circles_rs"
 version = "0.1.0"
 dependencies = [
+ "flat_map",
  "nalgebra",
  "num-integer",
  "wasm-bindgen",

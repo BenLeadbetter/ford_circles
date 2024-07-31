@@ -27,11 +27,14 @@ struct CanvasSize {
     height: f64,
 }
 
+type CoprimeCheckCache = flat_map::FlatMap<(i64, i64), bool>;
+
 #[wasm_bindgen]
 pub struct State {
     dirty: bool,
     transform: Matrix,
     canvas_size: CanvasSize,
+    coprime_check_cache: CoprimeCheckCache,
 }
 
 #[wasm_bindgen]
@@ -40,6 +43,7 @@ pub fn init() -> State {
         dirty: true,
         transform: Matrix::identity(),
         canvas_size: Default::default(),
+        coprime_check_cache: CoprimeCheckCache::new(),
     }
 }
 
@@ -113,7 +117,7 @@ pub fn render(
     Ok(())
 }
 
-pub fn draw(state: &State, context: &web_sys::CanvasRenderingContext2d) -> Result<(), JsValue> {
+pub fn draw(state: &mut State, context: &web_sys::CanvasRenderingContext2d) -> Result<(), JsValue> {
     let (x_min, x_max) = visible_range(state);
     let q_max = calc_q_max(x_min, x_max);
 
@@ -123,14 +127,18 @@ pub fn draw(state: &State, context: &web_sys::CanvasRenderingContext2d) -> Resul
         let p_min = (x_min * q as f64).floor() as i64;
         let p_max = (x_max * q as f64).ceil() as i64;
         for p in p_min..p_max {
-            use num_integer::Integer;
-            if p.gcd(&q)  == 1 {
+            if are_coprime(p, q, &mut state.coprime_check_cache) {
                 draw_circle(context, p, q)?;
             }
         }
     }
 
     Ok(())
+}
+
+fn are_coprime(p: i64, q: i64, cache: &mut CoprimeCheckCache) -> bool {
+    use num_integer::Integer;
+    **cache.get(&(p, q)).get_or_insert(&(p.gcd(&q) == 1))
 }
 
 fn calc_q_max(x_min: f64, x_max: f64) -> i64 {
