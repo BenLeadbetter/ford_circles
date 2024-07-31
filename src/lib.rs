@@ -5,7 +5,6 @@ type Vector = nalgebra::base::Vector2<f64>;
 
 // based on the nightfly vim colourscheme
 // https://github.com/bluz71/vim-nightfly-colors
-const BACKGROUND_COLOUR: &str = "#011627";
 const CIRCLE_COLOURS: [&str; 12] = [
     "#FC514F",
     "#A1CD5E",
@@ -186,7 +185,6 @@ fn set_transform_to_context(
 
 fn clear(state: &State, context: &web_sys::CanvasRenderingContext2d) -> Result<(), JsValue> {
     context.set_transform_with_default_dom_matrix_2d_init()?;
-    context.set_fill_style(&JsValue::from_str(BACKGROUND_COLOUR));
-    context.fill_rect(0.0, 0.0, state.canvas_size.width, state.canvas_size.height);
+    context.clear_rect(0.0, 0.0, state.canvas_size.width, state.canvas_size.height);
     Ok(())
 }
